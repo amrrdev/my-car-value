@@ -10,23 +10,18 @@ export class UsersService {
   constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
   async findOne(id: number): Promise<User> {
+    if (!id) return null;
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException(`There's no user with this id ${id}`);
     return user;
   }
 
-  async _findByEmail(email: string) {
-    return this.userRepository.findOneBy({ email });
+  async findByEmail(email: string) {
+    return await this.userRepository.findOneBy({ email });
   }
 
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
-  }
-
-  async findByEmail(email: string): Promise<User[]> {
-    const users = this.userRepository.find({ where: { email } });
-    if (!users) throw new NotFoundException(`There's no users with this email ${email}`);
-    return users;
   }
 
   async create(dto: CreateUserDto): Promise<User> {

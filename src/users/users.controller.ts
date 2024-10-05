@@ -4,31 +4,47 @@ import {
   Get,
   Body,
   Param,
-  Query,
   Patch,
+  Session,
   ParseIntPipe,
   Delete,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
+import { AuthService } from './auth.service';
+import { UserCredentialsDto } from './dto/user-credentials.dto';
+import { User } from './user.entity';
+import { CurrentUserInterceptor } from './interceptors/current-user.interceptor';
 
 @Controller('auth')
 @Serialize(UserDto)
 export class UsersController {
-  constructor(private readonly userService: UsersService) {}
+  constructor(
+    private readonly userService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Get()
   findAllUsers() {
     return this.userService.findAll();
   }
 
-  @Get('find-by-email')
-  findUserByEmail(@Query('email') email: string) {
-    return this.userService.findByEmail(email);
+  @Get('whoami')
+  @UseInterceptors(CurrentUserInterceptor)
+  getMe(@CurrentUser() user: User) {
+    return user;
+  }
+
+  @Get('signout')
+  signOut(@Session() session: any) {
+    session.userId = null;
+    console.log('amr');
   }
 
   @Get(':id')
@@ -36,9 +52,19 @@ export class UsersController {
     return this.userService.findOne(id);
   }
 
+  @Post('login')
+  async login(@Body() userCredentialsDto: UserCredentialsDto, @Session() session: any) {
+    const user = await this.authService.login(userCredentialsDto);
+    session.userId = user.id;
+    return user;
+  }
+
   @Post('signup')
-  createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async createUser(@Body() createUserDto: CreateUserDto, @Session() session: any) {
+    const user = await this.authService.singup(createUserDto);
+    session.userId = user.id;
+    console.log(session.userId);
+    return user;
   }
 
   @Patch(':id')
