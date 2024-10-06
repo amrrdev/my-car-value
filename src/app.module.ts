@@ -10,17 +10,6 @@ import { BcryptService } from './auth/hashing/bcrypt.service';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-// we place the connection in the root module before any other modules
-// to share the connection across all modules
-
-/*
- * synchronize: true,
- *  Database Sync: When you start your application,
- * TypeORM checks your entities and compares them to the existing database schema.
- * If there are any differences (like new columns or tables that need to be created),
- * it will make those changes automatically.
- *
- * */
 @Module({
   imports: [
     ConfigModule.forRoot({
